@@ -1,0 +1,35 @@
+import psutil
+import socket
+
+
+def network_info(interface: str) -> dict:
+    addrs = psutil.net_if_addrs().get(interface)
+    if not addrs:
+        return {"error": f"Interface '{interface}' not found"}
+
+    info = {
+        "ipv4": None,
+        "ipv6": None,
+        "mac": None,
+        "netmask": None,
+        "broadcast": None,
+    }
+
+    for addr in addrs:
+        if addr.family == socket.AF_INET:
+            info["ipv4"]      = addr.address
+            info["netmask"]   = addr.netmask
+            info["broadcast"] = addr.broadcast
+
+        elif addr.family == socket.AF_INET6:
+            info["ipv6"] = addr.address
+
+        elif addr.family == psutil.AF_LINK:
+            info["mac"] = addr.address
+
+    return info
+
+
+if __name__ == "__main__":
+    interface = ""  # change to your interface, e.g. "Wi-Fi", "en0", "ens33"
+    result = network_info(interface)
