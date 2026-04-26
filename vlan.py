@@ -43,5 +43,5 @@ def run(interface: str, timeout: int = 60):
 
 
 if __name__ == "__main__":
-    info = run("")
-    print(info)
+    interface = ""
+    result = run(interface)
