@@ -13,7 +13,6 @@ from scapy.contrib.cdp import (  # type: ignore
 load_contrib("cdp")
 
 def capture(interface: str, timeout: int = 60):
-    """Capture a single CDP packet from the interface."""
     try:
         packets = sniff(count=1, iface=interface, filter="ether host 01:00:0c:cc:cc:cc", timeout=timeout)
     except Exception:
@@ -26,7 +25,6 @@ def capture(interface: str, timeout: int = 60):
 
 
 def parse(packet):
-    """Parse the CDP packet for Switcher, Port, and VLAN."""
     try:
         switcher = packet["CDPMsgDeviceID"].val.decode("utf-8")
         port = packet["CDPMsgPortID"].iface.decode("utf-8")
