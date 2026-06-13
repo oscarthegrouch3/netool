@@ -89,7 +89,7 @@ def send_ack(pkt):
     sendp(ack, iface=interface, verbose=False)
 
 
-def run(interface, server_ip, count):
+def dhcp_scan(interface, server_ip, count):
     global ip_pool
     ip_pool = generate_pool(server_ip, count)
     assign_ip(interface, server_ip)
@@ -105,4 +105,4 @@ def run(interface, server_ip, count):
 if __name__ == "__main__":
     interface = "wlp0s20f3"  # interface
     devices = 3  # number of devices to connect
-    run(interface, server_ip, devices)
+    dhcp_scan(interface, server_ip, devices)

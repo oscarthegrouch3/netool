@@ -50,7 +50,7 @@ def xmas_scan(target, port, timeout=1.0):
 scan_options = {"syn": syn_scan, "udp": udp_scan, "xmas": xmas_scan}
 
 # Run scan with 
-def run(target: str, scan: str, ports: list = None, timeout: float = 1.0, threads: int = 50) -> dict:
+def port_scan(target: str, scan: str, ports: list = None, timeout: float = 1.0, threads: int = 50) -> dict:
  
     if scan not in scan_options:
         raise ValueError(f"Invalid scan type '{scan}'. Choose from: {', '.join(scan_options)}")
@@ -74,5 +74,5 @@ if __name__ == "__main__":
     target    = "192.168.1.1"
     scan = "syn"  # "syn", "udp", or "xmas"
 
-    results = run(target, scan)
+    results = port_scan(target, scan)
     print(results)

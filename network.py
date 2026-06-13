@@ -2,7 +2,7 @@ import psutil
 import socket
 
 # Basic network information e.g MAC, ipv4, ipv6, and broadcast
-def network_info(interface: str) -> dict:
+def network_scan(interface: str) -> dict:
     addrs = psutil.net_if_addrs().get(interface)
 
     # Check for selected interface
@@ -35,4 +35,4 @@ def network_info(interface: str) -> dict:
 
 if __name__ == "__main__":
     interface = ""  # change to your interface, e.g. "Wi-Fi", "en0", "ens33"
-    result = network_info(interface)
+    result = network_scan(interface)
