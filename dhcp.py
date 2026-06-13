@@ -5,25 +5,29 @@ from scapy.sendrecv import sendp, sniff
 from scapy.utils import mac2str
 import subprocess
 
-server_ip   = "192.168.100.1"
+server_ip = "192.168.100.1"
 subnet_mask = "255.255.255.0"
-assigned    = {}  # mac -> ip
+
+assigned = {}  # mac -> ip
+ip_pool = []   # populated by generate_pool
 
 
-def generate_pool(base_ip, count):
-    prefix = ".".join(base_ip.split(".")[:3])
+def generate_pool(server_ip, count):
+    prefix = ".".join(server_ip.split(".")[:3])
     return [f"{prefix}.{i}" for i in range(2, count + 2)]
+
 
 def assign_ip(interface, server_ip, prefix=24):
     subprocess.run(["sudo", "ip", "addr", "add", f"{server_ip}/{prefix}", "dev", interface], check=True)
     subprocess.run(["sudo", "ip", "link", "set", interface, "up"], check=True)
 
+
 def get_ip(mac):
     if mac in assigned:
         return assigned[mac]
-    available = [ip for ip in ip_pool if ip not in assigned.values()]  # noqa: F821
+    available = [ip for ip in ip_pool if ip not in assigned.values()]
     if not available:
-        print("[!] IP pool exhausted")
+        print("IP pool exhausted")
         return None
     assigned[mac] = available[0]
     return assigned[mac]
@@ -34,10 +38,10 @@ def handle_dhcp(pkt):
         return
     msg_type = next((opt[1] for opt in pkt[DHCP].options if opt[0] == "message-type"), None)
     if msg_type == 1:
-        print(f"[+] DHCPDISCOVER from {pkt[Ether].src}")
+        print(f"DHCPDISCOVER from {pkt[Ether].src}")
         send_offer(pkt)
     elif msg_type == 3:
-        print(f"[+] DHCPREQUEST from {pkt[Ether].src}")
+        print(f"DHCPREQUEST from {pkt[Ether].src}")
         send_ack(pkt)
 
 
@@ -52,6 +56,7 @@ def build_base(pkt, offer_ip):
               chaddr=mac2str(mac), xid=xid)
     )
 
+
 def send_offer(pkt):
     mac = pkt[Ether].src
     offer_ip = get_ip(mac)
@@ -59,14 +64,13 @@ def send_offer(pkt):
         return
     offer = build_base(pkt, offer_ip) / DHCP(options=[
         ("message-type", "offer"),
-        ("server_id",    server_ip),
-        ("lease_time",   86400),
-        ("subnet_mask",  subnet_mask),
-        ("router",       server_ip),
+        ("server_id", server_ip),
+        ("lease_time", 86400),
+        ("subnet_mask", subnet_mask),
+        ("router", server_ip),
         "end"
     ])
     sendp(offer, iface=interface, verbose=False)
-    print(f"[>] Sent OFFER: {offer_ip}")
 
 
 def send_ack(pkt):
@@ -76,18 +80,19 @@ def send_ack(pkt):
         return
     ack = build_base(pkt, offer_ip) / DHCP(options=[
         ("message-type", "ack"),
-        ("server_id",    server_ip),
-        ("lease_time",   86400),
-        ("subnet_mask",  subnet_mask),
-        ("router",       server_ip),
+        ("server_id", server_ip),
+        ("lease_time", 86400),
+        ("subnet_mask", subnet_mask),
+        ("router", server_ip),
         "end"
     ])
     sendp(ack, iface=interface, verbose=False)
-    print(f"[>] Sent ACK: {offer_ip} → {pkt[Ether].src}")
 
 
-def sniffing(interface):
-    print(f"[*] Listening for DHCP on {interface} ...")
+def run(interface, server_ip, count):
+    global ip_pool
+    ip_pool = generate_pool(server_ip, count)
+    assign_ip(interface, server_ip)
     sniff(
         iface=interface,
         filter="udp and (port 67 or port 68)",
@@ -95,12 +100,9 @@ def sniffing(interface):
         store=False,
         timeout=90,
     )
-    print("[*] Done.")
 
 
 if __name__ == "__main__":
-    interface = "" # interface
-    devices = "" # number of devices to connect
-    ip_pool = generate_pool(server_ip, count=devices)
-    assign_ip(interface, server_ip)
-    sniffing(interface)
+    interface = "wlp0s20f3"  # interface
+    devices = 3  # number of devices to connect
+    run(interface, server_ip, devices)

@@ -1,9 +1,11 @@
 import psutil
 import socket
 
-
+# Basic network information e.g MAC, ipv4, ipv6, and broadcast
 def network_info(interface: str) -> dict:
     addrs = psutil.net_if_addrs().get(interface)
+
+    # Check for selected interface
     if not addrs:
         return {"error": f"Interface '{interface}' not found"}
 
@@ -15,6 +17,7 @@ def network_info(interface: str) -> dict:
         "broadcast": None,
     }
 
+    # Loop through addr values to add to info dictionary
     for addr in addrs:
         if addr.family == socket.AF_INET:
             info["ipv4"]      = addr.address

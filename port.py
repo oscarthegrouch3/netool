@@ -1,14 +1,10 @@
-"""
-Scapy Port Scanner
-Run as root/administrator for raw socket access.
-"""
-
 from scapy.all import IP, TCP, UDP, sr1, RandShort, conf
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 conf.verb = 0
 
-COMMON_PORTS = [
+# Default ports for scan
+default_ports = [
     21, 22, 23, 25, 53, 80, 110, 111, 135, 139,
     143, 443, 445, 993, 995, 1723, 3306, 3389,
     5900, 8080, 8443, 8888,
@@ -51,27 +47,16 @@ def xmas_scan(target, port, timeout=1.0):
         state = "filtered"
     return {"port": port, "state": state}
 
+scan_options = {"syn": syn_scan, "udp": udp_scan, "xmas": xmas_scan}
 
-SCANS = {"syn": syn_scan, "udp": udp_scan, "xmas": xmas_scan}
+# Run scan with 
+def run(target: str, scan: str, ports: list = None, timeout: float = 1.0, threads: int = 50) -> dict:
+ 
+    if scan not in scan_options:
+        raise ValueError(f"Invalid scan type '{scan}'. Choose from: {', '.join(scan_options)}")
 
-# Runner
-
-def run_scan(target: str, scan_type: str, ports: list = None, timeout: float = 1.0, threads: int = 50) -> dict:
-    """
-    Scan a target and return {port: state} dict.
-
-    Args:
-        target:    IP address or hostname
-        scan_type: "syn", "udp", or "xmas"
-        ports:     list of ints (defaults to COMMON_PORTS)
-        timeout:   seconds per probe
-        threads:   max concurrent threads
-    """
-    if scan_type not in SCANS:
-        raise ValueError(f"Invalid scan type '{scan_type}'. Choose from: {', '.join(SCANS)}")
-
-    fn = SCANS[scan_type]
-    ports = ports or COMMON_PORTS
+    fn = scan_options[scan]
+    ports = ports or default_ports
     results = {}
 
     with ThreadPoolExecutor(max_workers=threads) as ex:
@@ -85,12 +70,9 @@ def run_scan(target: str, scan_type: str, ports: list = None, timeout: float = 1
 
     return results
 
-
-# Entry Point
-
 if __name__ == "__main__":
     target    = "192.168.1.1"
-    scan_type = "syn"           # "syn", "udp", or "xmas"
+    scan = "syn"  # "syn", "udp", or "xmas"
 
-    results = run_scan(target, scan_type)
+    results = run(target, scan)
     print(results)
