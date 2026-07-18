@@ -4,6 +4,9 @@ from scapy.layers.dhcp import DHCP, BOOTP
 from scapy.sendrecv import sendp, sniff
 from scapy.utils import mac2str
 import subprocess
+import logging
+
+logger = logging.getLogger(__name__)
 
 server_ip = "192.168.100.1"
 subnet_mask = "255.255.255.0"
@@ -27,7 +30,7 @@ def get_ip(mac):
         return assigned[mac]
     available = [ip for ip in ip_pool if ip not in assigned.values()]
     if not available:
-        print("IP pool exhausted")
+        logger.error("IP pool exhausted")
         return None
     assigned[mac] = available[0]
     return assigned[mac]
@@ -38,10 +41,10 @@ def handle_dhcp(pkt):
         return
     msg_type = next((opt[1] for opt in pkt[DHCP].options if opt[0] == "message-type"), None)
     if msg_type == 1:
-        print(f"DHCPDISCOVER from {pkt[Ether].src}")
+        logger.info(f"DHCPDISCOVER from {pkt[Ether].src}")
         send_offer(pkt)
     elif msg_type == 3:
-        print(f"DHCPREQUEST from {pkt[Ether].src}")
+        logger.info(f"DHCPREQUEST from {pkt[Ether].src}")
         send_ack(pkt)
 
 

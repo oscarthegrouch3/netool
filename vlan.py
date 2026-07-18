@@ -8,6 +8,9 @@ from scapy.contrib.cdp import (  # type: ignore
     CDPMsgDuplex,
     CDPMsgVTPMgmtDomain,
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Load CDP dissector
 load_contrib("cdp")
@@ -16,9 +19,11 @@ def capture(interface: str, timeout: int = 60):
     try:
         packets = sniff(count=1, iface=interface, filter="ether host 01:00:0c:cc:cc:cc", timeout=timeout)
     except Exception:
+        logger.exception("Failed to capture CDP packet")
         return None
 
     if not packets:
+        logger.warning("No CDP packets captured within timeout")
         return None
 
     return packets[0]
@@ -31,6 +36,7 @@ def parse(packet):
         vlan = packet["CDPMsgNativeVLAN"].vlan
         return {"Switcher": switcher, "Port": port, "VLAN": vlan}
     except Exception:
+        logger.exception("Failed to parse CDP packet")
         return {"Switcher": None, "Port": None, "VLAN": None}
 
 

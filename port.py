@@ -1,5 +1,8 @@
 from scapy.all import IP, TCP, UDP, sr1, RandShort, conf
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import logging
+
+logger = logging.getLogger(__name__)
 
 conf.verb = 0
 
@@ -66,6 +69,7 @@ def port_scan(target: str, scan: str, ports: list = None, timeout: float = 1.0, 
                 r = fut.result()
                 results[r["port"]] = r["state"]
             except Exception as e:
+                logger.exception(f"Error scanning port {futures[fut]}: {e}")
                 results[futures[fut]] = f"error: {e}"
 
     return results

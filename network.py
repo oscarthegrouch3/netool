@@ -1,5 +1,8 @@
 import psutil
 import socket
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Basic network information e.g MAC, ipv4, ipv6, and broadcast
 def network_scan(interface: str) -> dict:
@@ -7,6 +10,7 @@ def network_scan(interface: str) -> dict:
 
     # Check for selected interface
     if not addrs:
+        logger.error(f"Interface '{interface}' not found")
         return {"error": f"Interface '{interface}' not found"}
 
     info = {

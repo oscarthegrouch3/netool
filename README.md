@@ -3,8 +3,8 @@
 A python network toolkit built with Scapy and psutil
 
 - network — show interface info (IP, MAC, netmask, broadcast)
+- interfaces — list active network interfaces
 - port — port scan a target (SYN, UDP, or Xmas)
-- subnet — ARP scan the local subnet for live hosts
 - vlan — detect switch/port/VLAN via CDP
 - dhcp — run a test DHCP server
 
@@ -28,6 +28,13 @@ python3 main.py network -i wlp0s20f3
 ```
 - `-i, --interface` — interface name (required)
 
+### interfaces
+
+```bash
+python3 main.py interfaces
+```
+Lists all network interfaces that are currently UP.
+
 ### port
 
 sudo python3 main.py port 192.168.1.1 -s syn -p 22,80,443
@@ -37,11 +44,6 @@ sudo python3 main.py port 192.168.1.1 -s syn -p 22,80,443
 - `-p, --ports` — comma-separated ports/ranges, e.g. `22,80,1000-1010` (default: common ports)
 - `-t, --timeout` — per-port timeout in seconds (default: `1.0`)
 - `-w, --threads` — worker threads (default: `50`)
-
-### subnet
-sudo python3 main.py subnet -i wlp0s20f3
-
-- `-i, --interface` — interface name (required)
 
 ### vlan
 sudo python3 main.py vlan -i eth0 -t 60

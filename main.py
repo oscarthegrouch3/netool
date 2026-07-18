@@ -1,16 +1,24 @@
 import argparse
 import json
 import sys
+import logging
 
 import network
 import port
 import dhcp
 import vlan
 import subnet
+import interface
+from log import setup_logging
 
 
 def cmd_network(args):
     result = network.network_scan(args.interface)
+    print(json.dumps(result, indent=2))
+
+
+def cmd_interface(args):
+    result = interface.list_interfaces()
     print(json.dumps(result, indent=2))
 
 
@@ -58,12 +66,20 @@ def main():
     parser = argparse.ArgumentParser(
         description="Network toolkit for Port scanning, DHCP, VLAN/CDP, subnet discovery"
     )
+    
+    # Global options
+    parser.add_argument("--log-file", help="Write logs to a file instead of stderr")
+
     sub = parser.add_subparsers(dest="command", required=True)
 
     # network
     p_net = sub.add_parser("network", help="Show interface network info (IP, MAC, etc.)")
     p_net.add_argument("-i", "--interface", required=True, help="Interface name")
     p_net.set_defaults(func=cmd_network)
+
+    # interfaces
+    p_if = sub.add_parser("interfaces", help="List all current network interfaces")
+    p_if.set_defaults(func=cmd_interface)
 
     # port
     p_port = sub.add_parser("port", help="Port scan a target")
@@ -77,7 +93,7 @@ def main():
         help="Comma-separated ports/ranges, e.g. '22,80,1000-1010'. "
              "Default: built-in common port list."
     )
-    p_port.add_argument("-t", "--timeout", type=float, default=1.0,
+    p_port.add_argument("-to", "--timeout", type=float, default=1.0,
                          help="Per-port timeout in seconds (default: %(default)s)")
     p_port.add_argument("-w", "--threads", type=int, default=50,
                          help="Number of worker threads (default: %(default)s)")
@@ -100,6 +116,9 @@ def main():
     p_vlan.set_defaults(func=cmd_vlan)
 
     args = parser.parse_args()
+    
+    setup_logging(log_file=args.log_file)
+    
     try:
         args.func(args)
     except KeyboardInterrupt:
