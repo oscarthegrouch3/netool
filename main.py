@@ -47,15 +47,6 @@ def cmd_dhcp(args):
         count=args.count,
     )
 
-
-def cmd_subnet(args):
-    result = subnet.subnet_scan(args.interface)
-    if not result:
-        print("No hosts found (or interface not found / no IPv4 address).")
-        return
-    print(json.dumps(result, indent=2))
-
-
 def cmd_vlan(args):
     result = vlan.run(args.interface, timeout=args.timeout)
     if result.get("Switcher") is None:
@@ -65,7 +56,7 @@ def cmd_vlan(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Network toolkit: scanning, DHCP, VLAN/CDP, subnet discovery"
+        description="Network toolkit for Port scanning, DHCP, VLAN/CDP, subnet discovery"
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -100,11 +91,6 @@ def main():
     p_dhcp.add_argument("-c", "--count", type=int, default=3,
                          help="Number of leases in pool (default: %(default)s)")
     p_dhcp.set_defaults(func=cmd_dhcp)
-
-    # subnet
-    p_subnet = sub.add_parser("subnet", help="ARP-scan the local subnet")
-    p_subnet.add_argument("-i", "--interface", required=True, help="Interface name")
-    p_subnet.set_defaults(func=cmd_subnet)
 
     # vlan
     p_vlan = sub.add_parser("vlan", help="Capture CDP packet to learn switch/port/VLAN")
