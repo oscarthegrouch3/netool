@@ -68,7 +68,8 @@ def main():
     )
     
     # Global options
-    parser.add_argument("--log-file", help="Write logs to a file instead of stderr")
+    parser.add_argument("--log", action="store_true", 
+                        help="Enable logging to a file (default: netool.log)")
 
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -117,7 +118,26 @@ def main():
 
     args = parser.parse_args()
     
-    setup_logging(log_file=args.log_file)
+    import os
+    log_file = None
+    if args.log:
+        # Common Linux log path: /var/log/netool.log
+        # We use a fallback to user's home if /var/log is not writable
+        default_path = "/var/log/netool.log"
+        home_path = os.path.expanduser("~/.netool.log")
+        
+        # Check if we can write to /var/log
+        try:
+            if os.path.exists(default_path) and not os.access(default_path, os.W_OK):
+                log_file = home_path
+            elif not os.access(os.path.dirname(default_path), os.W_OK):
+                log_file = home_path
+            else:
+                log_file = default_path
+        except Exception:
+            log_file = home_path
+
+    setup_logging(log_file=log_file)
     
     try:
         args.func(args)

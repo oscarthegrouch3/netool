@@ -12,10 +12,12 @@ def setup_logging(log_file=None):
     handlers = [logging.StreamHandler(sys.stderr)]
     
     if log_file:
+        # Ensure the log file path is absolute if a default name is used
+        log_path = log_file
         try:
-            handlers.append(logging.FileHandler(log_file))
+            handlers.append(logging.FileHandler(log_path))
         except Exception as e:
-            print(f"Warning: Could not open log file {log_file}: {e}", file=sys.stderr)
+            print(f"Warning: Could not open log file {log_path}: {e}", file=sys.stderr)
 
     logging.basicConfig(
         level=logging.INFO,

@@ -12,7 +12,7 @@ A python network toolkit built with Scapy and psutil
 
 pip install scapy psutil
 
-Python 3.8+. `port`, `subnet`, `vlan`, and `dhcp` need root/admin (raw sockets).
+Python 3.8+. `interface`, `port`, `subnet`, `vlan` and `dhcp` need root/admin (raw sockets).
 
 ## Usage
 
