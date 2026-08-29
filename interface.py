@@ -27,7 +27,5 @@ def list_interfaces():
         return []
 
 if __name__ == "__main__":
-    # Simple test
-    print("Active Interfaces:")
     for iface in list_interfaces():
         print(iface)

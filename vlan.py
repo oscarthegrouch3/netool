@@ -12,7 +12,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Load CDP dissector
+"""
+Load CDP dissector
+"""
 load_contrib("cdp")
 
 def capture(interface: str, timeout: int = 60):

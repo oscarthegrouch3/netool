@@ -4,11 +4,15 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Basic network information e.g MAC, ipv4, ipv6, and broadcast
+"""
+Basic network information e.g MAC, ipv4, ipv6, and broadcast
+"""
 def network_scan(interface: str) -> dict:
     addrs = psutil.net_if_addrs().get(interface)
 
-    # Check for selected interface
+    """
+    Check for selected interface
+    """
     if not addrs:
         logger.error(f"Interface '{interface}' not found")
         return {"error": f"Interface '{interface}' not found"}
@@ -21,7 +25,9 @@ def network_scan(interface: str) -> dict:
         "broadcast": None,
     }
 
-    # Loop through addr values to add to info dictionary
+    """
+    Loop through addr values to add to info dictionary
+    """
     for addr in addrs:
         if addr.family == socket.AF_INET:
             info["ipv4"]      = addr.address

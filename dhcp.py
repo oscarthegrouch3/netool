@@ -8,8 +8,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-server_ip = "192.168.100.1"
-subnet_mask = "255.255.255.0"
+"""
+Default DHCP server configuration
+"""
+default_server_ip = "192.168.100.1"
+default_subnet_mask = "255.255.255.0"
 
 assigned = {}  # mac -> ip
 ip_pool = []   # populated by generate_pool
@@ -21,8 +24,8 @@ def generate_pool(server_ip, count):
 
 
 def assign_ip(interface, server_ip, prefix=24):
-    subprocess.run(["sudo", "ip", "addr", "add", f"{server_ip}/{prefix}", "dev", interface], check=True)
-    subprocess.run(["sudo", "ip", "link", "set", interface, "up"], check=True)
+    subprocess.run(["ip", "addr", "add", f"{server_ip}/{prefix}", "dev", interface], check=True)
+    subprocess.run(["ip", "link", "set", interface, "up"], check=True)
 
 
 def get_ip(mac):
@@ -36,19 +39,25 @@ def get_ip(mac):
     return assigned[mac]
 
 
-def handle_dhcp(pkt):
+def handle_dhcp(pkt, callback=None, server_ip=None, subnet_mask=None, interface=None):
     if DHCP not in pkt:
         return
     msg_type = next((opt[1] for opt in pkt[DHCP].options if opt[0] == "message-type"), None)
     if msg_type == 1:
-        logger.info(f"DHCPDISCOVER from {pkt[Ether].src}")
-        send_offer(pkt)
+        mac = pkt[Ether].src
+        logger.info(f"DHCPDISCOVER from {mac}")
+        if callback:
+            callback("DISCOVER", mac)
+        send_offer(pkt, server_ip, subnet_mask, interface)
     elif msg_type == 3:
-        logger.info(f"DHCPREQUEST from {pkt[Ether].src}")
-        send_ack(pkt)
+        mac = pkt[Ether].src
+        logger.info(f"DHCPREQUEST from {mac}")
+        if callback:
+            callback("REQUEST", mac)
+        send_ack(pkt, server_ip, subnet_mask, interface)
 
 
-def build_base(pkt, offer_ip):
+def build_base(pkt, offer_ip, server_ip):
     mac = pkt[Ether].src
     xid = pkt[BOOTP].xid
     return (
@@ -60,12 +69,12 @@ def build_base(pkt, offer_ip):
     )
 
 
-def send_offer(pkt):
+def send_offer(pkt, server_ip, subnet_mask, interface):
     mac = pkt[Ether].src
     offer_ip = get_ip(mac)
     if not offer_ip:
         return
-    offer = build_base(pkt, offer_ip) / DHCP(options=[
+    offer = build_base(pkt, offer_ip, server_ip) / DHCP(options=[
         ("message-type", "offer"),
         ("server_id", server_ip),
         ("lease_time", 86400),
@@ -76,12 +85,12 @@ def send_offer(pkt):
     sendp(offer, iface=interface, verbose=False)
 
 
-def send_ack(pkt):
+def send_ack(pkt, server_ip, subnet_mask, interface):
     mac = pkt[Ether].src
     offer_ip = get_ip(mac)
     if not offer_ip:
         return
-    ack = build_base(pkt, offer_ip) / DHCP(options=[
+    ack = build_base(pkt, offer_ip, server_ip) / DHCP(options=[
         ("message-type", "ack"),
         ("server_id", server_ip),
         ("lease_time", 86400),
@@ -92,14 +101,19 @@ def send_ack(pkt):
     sendp(ack, iface=interface, verbose=False)
 
 
-def dhcp_scan(interface, server_ip, count):
+def dhcp_scan(interface, server_ip, count, subnet_mask="255.255.255.0", callback=None):
     global ip_pool
     ip_pool = generate_pool(server_ip, count)
     assign_ip(interface, server_ip)
+    
+    # Create a wrapper for the callback to match sniff's prn signature
+    def packet_handler(pkt):
+        handle_dhcp(pkt, callback, server_ip, subnet_mask, interface)
+
     sniff(
         iface=interface,
         filter="udp and (port 67 or port 68)",
-        prn=handle_dhcp,
+        prn=packet_handler,
         store=False,
         timeout=90,
     )

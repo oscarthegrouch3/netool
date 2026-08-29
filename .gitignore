@@ -3,3 +3,4 @@ uv.lock
 .python-version
 __pycache__/
 *.pyc
+TODO.md

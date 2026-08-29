@@ -4,13 +4,14 @@ A python network toolkit built with Scapy and psutil
 
 - network — show interface info (IP, MAC, netmask, broadcast)
 - interfaces — list active network interfaces
-- port — port scan a target (SYN, UDP, or Xmas)
+- port — port scan a target (TCP, SYN, UDP, or Xmas)
 - vlan — detect switch/port/VLAN via CDP
 - dhcp — run a test DHCP server
+- scan — scan subnet for active devices and identify vendors
 
 ## Requirements
 
-pip install scapy psutil
+pip install scapy psutil requests
 
 Python 3.8+. `interface`, `port`, `subnet`, `vlan` and `dhcp` need root/admin (raw sockets).
 
@@ -40,10 +41,13 @@ Lists all network interfaces that are currently UP.
 sudo python3 main.py port 192.168.1.1 -s syn -p 22,80,443
 
 - `target` — IP or hostname (required)
-- `-s, --scan` — `syn`, `udp`, or `xmas` (default: `syn`)
+- `-s, --scan` — `syn`, `udp`, `xmas`, or `tcp` (default: `syn`)
 - `-p, --ports` — comma-separated ports/ranges, e.g. `22,80,1000-1010` (default: common ports)
-- `-t, --timeout` — per-port timeout in seconds (default: `1.0`)
-- `-w, --threads` — worker threads (default: `50`)
+- `-top, --top` — use top N most frequent ports from nmap-services (e.g. `--top 100`)
+- `-w, --wordlist` — path to a local port wordlist file
+- `-r, --remote` — pull common ports from SecLists
+- `-to, --timeout` — per-port timeout in seconds (default: `1.0`)
+- `-th, --threads` — number of worker threads (default: `50`)
 
 ### vlan
 sudo python3 main.py vlan -i eth0 -t 60
@@ -57,3 +61,8 @@ sudo python3 main.py dhcp -i wlp0s20f3 -s 192.168.100.1 -c 5
 - `-i, --interface` — interface to bind/listen on (required)
 - `-s, --server-ip` — DHCP server IP (default: `192.168.100.1`)
 - `-c, --count` — number of leases in pool (default: `3`)
+
+### scan
+sudo python3 main.py scan -s 192.168.1.0/24
+
+- `-s, --subnet` — subnet to scan (e.g. 192.168.1.0/24) (required)
